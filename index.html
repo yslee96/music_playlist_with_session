@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="./style.css">
+    <title>Music App</title>
+</head>
+
+<body>
+<header>
+    <div class="menu_side">
+        <h1>Watermelon</h1>
+        <div class="playlist">
+            <h4 class="active"><span></span><i class="bi bi-music-note-beamed"></i> KPOP ON!</h4>
+            <h4 ><span></span><i class="bi bi-music-note-beamed"></i> New Release</h4>
+            <h4 ><span></span><i class="bi bi-music-note-beamed"></i> Recommended</h4>
+        </div>
+        <div class="menu_song" id="menu_song">
+            <li class="songItem">
+                <span>01</span>
+                <img src="https://i.scdn.co/image/ab67616d0000485104878afb19613a94d37b29ce" alt="Aespa">
+                <h5>
+                    Spicy
+                    <div class="subtitle">aespa</div>
+                </h5>
+                    <i class="bi playListPlay bi-play-circle-fill" id="1"></i>
+            </li>
+        </div>
+    </div>
+
+    <div class="song_side">
+        <div class="popular_song" id="popular_song">
+            <div class="h4">
+                <h4>Popular Song</h4>
+                <div class="btn_s">
+                    <i id="left_scroll" class="bi bi-arrow-left-short"></i>
+                    <i id="right_scroll" class="bi bi-arrow-right-short"></i>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="master_play">
+        <div class="wave">
+            <div class="wave1"></div>
+            <div class="wave1"></div>
+            <div class="wave1"></div>
+        </div>
+        <img src="https://i.scdn.co/image/ab67616d0000b27304878afb19613a94d37b29ce" alt="Alan" id="poster_master_play">
+        <h5 id="title">Spicy<br>
+            <div class="subtitle">aespa</div>
+        </h5>
+        <div class="icon">
+            <i class="bi bi-skip-start-fill" id="back"></i>
+            <i class="bi bi-play-fill" id="masterPlay"></i>
+            <i class="bi bi-skip-end-fill" id="next"></i>
+        </div>
+        <span id="currentStart">0:00</span>
+        <div class="bar">
+            <input type="range" id="seek" min="0" value="0" max="100">
+            <div class="bar2" id="bar2"></div>
+            <div class="dot"></div>
+        </div>
+        <span id="currentEnd">2:58</span>
+
+        <div class="vol">
+            <i class="bi bi-volume-down-fill" id="vol_icon"></i>
+            <input type="range" id="vol" min="0" value="30" max="100">
+            <div class="vol_bar"></div>
+            <div class="dot" id="vol_dot"></div>
+        </div>
+    </div>
+</header>
+    <script>
+        const getPlayList = () =>{
+            let sessionData;
+            let output = ''
+            let dataIdx = 0;
+            if(sessionStorage.getItem("playlist") === null) { 
+                sessionData = [];
+            } else {
+                sessionData = JSON.parse(sessionStorage.getItem("playlist")); 
+            }
+            
+            for(let dataIdx =0; dataIdx < sessionData.length; dataIdx++){
+                const data = sessionData[dataIdx];
+                console.log(data);
+                const trackName = data[0];
+                const artistName = data[1];
+                const albumImageUrl = data[2];
+                output += `
+                    <li class="songItem">
+                        <span>${dataIdx+1}</span>
+                        <img src=${albumImageUrl} alt="album">
+                        <h5>
+                            ${trackName}
+                            <div class="subtitle">${artistName}</div>
+                        </h5>
+                            <i class="bi playListPlay bi-play-circle-fill" id="1"></i>
+                    </li>
+                `
+            }
+            console.log(output);
+            document.getElementById("menu_song").innerHTML = output;
+        }
+        const addPlayListSession = (index) => {
+            let xhr2 = new XMLHttpRequest();
+            xhr2.open("GET", "playlist.json");
+            xhr2.send();
+            xhr2.onreadystatechange = function () {
+                if (xhr2.readyState === 4 && xhr2.status === 200) {
+                    let trackList = JSON.parse(xhr2.responseText);
+                    let trackItems = trackList['tracks']['items'];
+                    const track = trackItems[index]['track'];
+                    const artist = track['artists'][0];
+                    const album = track['album'];
+        
+                    const trackName = track['name'];
+                    const artistName = artist['name']
+                    const albumImage = album['images'];
+                    
+                    let sessionData;
+                    if(sessionStorage.getItem("playlist") === null) { // 스토리지에 students 키가 있는지 확인.
+                        sessionData = [];
+                    } else {
+                        sessionData = JSON.parse(sessionStorage.getItem("playlist")); // 스토리지의 값을 localData로 저장
+                    }
+                    sessionData.push([trackName, artistName, albumImage[2]['url']]); // localData에 Choi 추가
+                    sessionStorage.setItem("playlist", JSON.stringify(sessionData)); // 스토리지에 localData 저장
+                    console.log(`추가 후 playlist : ${sessionData}`); // 스토리지에 저장된 값을 표시
+                    getPlayList();
+                    //Set Event Listner on Buttons
+                }
+            };
+        };
+        
+        
+        // Popular Songs
+        let xhr1 = new XMLHttpRequest();
+        xhr1.open("GET", "playlist.json");
+        xhr1.send();
+        
+        xhr1.onreadystatechange = function () {
+            if (xhr1.readyState === 4 && xhr1.status === 200) {
+                let output=''
+                let trackIdx = 0;
+                let trackList = JSON.parse(xhr1.responseText);
+                let trackItems = trackList['tracks']['items'];
+                for(let item in trackItems){
+                    if(trackIdx == 48) break;
+                    if(trackIdx % 12==0) {
+                        if(trackIdx>0){
+                            output+= `</div>`;
+                        }
+                        output += `<div class="pop_song">`;
+                    }
+        
+                    const track = trackItems[item]['track'];
+                    const artist = track['artists'][0];
+                    const album = track['album'];
+        
+                    const trackName = track['name'];
+                    const artistName = artist['name']
+                    const albumImage = album['images'];
+        
+                    output += `
+                            <li class="songItem">
+                                <div class="img_play">
+                                    <img src=${albumImage[1]['url']} alt="album-image">
+                                    <i class="bi playListPlay bi-play-circle-fill" id=${trackIdx}></i>
+                                </div>
+                                <h5>${trackName}<br><div class="subtitle">${artistName}</div></h5>
+                            </li>
+                    `;
+                    trackIdx+=1
+                }
+                document.getElementById("popular_song").innerHTML += output;
+                //Set Event Listner on Buttons
+                Array.from(document.getElementsByClassName('playListPlay')).forEach((element)=>{
+                    element.addEventListener('click', (e)=>{
+                        index = e.target.id;
+                        console.log(index);
+                        addPlayListSession(index);
+                        getPlayList()
+                    });
+                });
+            }
+        };
+        // PlayList
+        getPlayList();
+        //sessionStorage.removeItem('playlist');
+    </script>
+</body>
+
+</html>
